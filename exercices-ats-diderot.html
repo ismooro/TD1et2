@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ATS Lycée Diderot — Exercices avec corrections</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<style>
+:root{
+  --bg:#f5f5f2; --fg:#1c1c1c; --card:#ffffff; --border:#d8d8d2;
+  --accent:#2a5a8f; --accent-fg:#ffffff; --corr-bg:#eef4fa; --dim:#6b6b66;
+  --btn-bg:#e9e9e4; --btn-fg:#1c1c1c;
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme: dark){
+    --bg:#181818; --fg:#eaeaea; --card:#232323; --border:#3a3a3a;
+    --accent:#5b9bd5; --accent-fg:#0d0d0d; --corr-bg:#132030; --dim:#a0a0a0;
+    --btn-bg:#2f2f2f; --btn-fg:#eaeaea;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#181818; --fg:#eaeaea; --card:#232323; --border:#3a3a3a;
+  --accent:#5b9bd5; --accent-fg:#0d0d0d; --corr-bg:#132030; --dim:#a0a0a0;
+  --btn-bg:#2f2f2f; --btn-fg:#eaeaea;
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  min-height:100%;
+}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:10px 14px; border-bottom:1px solid var(--border); flex-wrap:wrap;
+  position:sticky; top:env(safe-area-inset-top,0px); background:var(--bg); z-index:5;
+}
+.topbar h1{font-size:1rem; margin:0; font-weight:600;}
+.theme-btn{
+  background:var(--btn-bg); color:var(--btn-fg); border:1px solid var(--border);
+  border-radius:6px; padding:6px 10px; cursor:pointer; font-size:0.9rem;
+}
+.controls{padding:10px 14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.controls select{
+  background:var(--card); color:var(--fg); border:1px solid var(--border);
+  border-radius:6px; padding:6px; max-width:100%;
+}
+.progress{color:var(--dim); font-size:0.85rem;}
+main{max-width:760px; margin:0 auto; padding:6px 14px 40px;}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:10px;
+  padding:16px; overflow-x:auto;
+}
+.examheader{color:var(--dim); font-size:0.8rem; margin-bottom:2px;}
+.exoid{font-weight:700; color:var(--accent); margin-bottom:8px; font-size:1.05rem;}
+.qtext{line-height:1.55; margin-bottom:14px;}
+.btn-corr{
+  background:var(--accent); color:var(--accent-fg); border:none; border-radius:6px;
+  padding:9px 14px; cursor:pointer; font-size:0.92rem;
+}
+.correction{
+  margin-top:14px; padding:12px; background:var(--corr-bg); border-radius:8px;
+  line-height:1.6; font-size:0.95rem;
+}
+.correction p{margin:0 0 10px 0;}
+.correction p:last-child{margin-bottom:0;}
+.navrow{
+  display:flex; justify-content:space-between; align-items:center; margin-top:18px; gap:8px;
+}
+.navbtn{
+  background:var(--btn-bg); color:var(--btn-fg); border:1px solid var(--border);
+  border-radius:6px; padding:9px 14px; cursor:pointer; font-size:0.92rem;
+}
+.navbtn:disabled{opacity:0.4; cursor:default;}
+.navbtn.next{background:var(--accent); color:var(--accent-fg); border:none;}
+table.frac-none{border-collapse:collapse;}
+::-webkit-scrollbar{height:8px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>Exercices ATS — Lycée Diderot</h1>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌓 Thème</button>
+</div>
+<div class="controls">
+  <select id="jump" onchange="goTo(this.value)"></select>
+  <span class="progress" id="progress"></span>
+</div>
+<main>
+  <div class="card">
+    <div class="examheader" id="examheader"></div>
+    <div class="exoid" id="exoid"></div>
+    <div class="qtext" id="qtext"></div>
+    <button class="btn-corr" id="corrBtn" onclick="toggleCorr()">Voir la correction</button>
+    <div class="correction" id="correction" hidden></div>
+  </div>
+  <div class="navrow">
+    <button class="navbtn" id="prevBtn" onclick="prev()">◀ Précédente</button>
+    <button class="navbtn next" id="nextBtn" onclick="next()">Question suivante ▶</button>
+  </div>
+</main>
+
+<script>
+// ---------- Données ----------
+const CH1 = "Chapitre 1 : Logique, ensembles et récurrence";
+const M1 = "ATS — Lycée Diderot — 2026-2027";
+const CH2 = "Chapitre 2 : Nombres Complexes";
+const M2 = "ATS — Lycée Diderot — 2025-2026";
+
+const DATA = [];
+function add(chap, meta, exo, q, c){ DATA.push({chap, meta, exo, q, c}); }
+
+/* ===================== CHAPITRE 1 ===================== */
+
+add(CH1,M1,"Exercice 1.1","1. Écrire la négation « $\\forall x \\in [1,+\\infty[\\ \\ (x^2 \\geq 1)$ »",
+`<p><b>Idée générale :</b> pour nier une proposition qui commence par « pour tout » ($\\forall$), on la transforme en « il existe » ($\\exists$), et on nie ce qui suit.</p>
+<p><b>Étape 1.</b> La proposition est $\\forall x \\in [1,+\\infty[,\\ x^2 \\geq 1$. Le « $\\forall$ » devient « $\\exists$ » dans la négation.</p>
+<p><b>Étape 2.</b> On nie la partie « $x^2 \\geq 1$ » : la négation de « $\\geq$ » est « $\\lt$ ». On obtient « $x^2 \\lt 1$ ».</p>
+<p><b>Conclusion :</b> la négation est $\\exists x \\in [1,+\\infty[,\\ x^2 \\lt 1$ (« il existe un réel $x \\geq 1$ tel que $x^2\\lt1$ »). Remarque : cette phrase est fausse, car pour $x\\geq1$ on a toujours $x^2\\geq1$ ; c'est normal, la négation d'une phrase vraie est fausse.</p>`);
+
+add(CH1,M1,"Exercice 1.1","2. Un ensemble $E$ de réels majoré vérifie : $\\exists y \\in \\mathbb{R}, \\forall x \\in E, y \\geq x$.<br>Écrire avec des quantificateurs la définition d'un ensemble non majoré.<br>Vérifier que l'intervalle $[0;+\\infty[$ n'est pas majoré.",
+`<p><b>Étape 1 — négation :</b> « $E$ n'est pas majoré » est la négation de « $\\exists y \\in \\mathbb{R}, \\forall x \\in E, y \\geq x$ ». On applique la règle : $\\exists$ devient $\\forall$, $\\forall$ devient $\\exists$, et « $y\\geq x$ » devient « $y\\lt x$ ».</p>
+<p>On obtient : <b>$E$ non majoré</b> $\\iff \\forall y \\in \\mathbb{R}, \\exists x \\in E,\\ x>y$ (pour tout réel $y$, on peut trouver un élément de $E$ strictement plus grand que $y$).</p>
+<p><b>Étape 2 — vérification pour $[0,+\\infty[$ :</b> on prend un réel $y$ quelconque. On doit trouver $x \\in [0,+\\infty[$ avec $x>y$. On choisit par exemple $x=|y|+1$ : ce nombre est bien dans $[0,+\\infty[$ (car $|y|+1>0$), et il vérifie $x=|y|+1 \\geq y+1 > y$. Comme $y$ était quelconque, on a bien montré $\\forall y\\in\\mathbb{R},\\exists x\\in[0,+\\infty[, x>y$, donc $[0,+\\infty[$ n'est pas majoré.</p>`);
+
+add(CH1,M1,"Exercice 1.1","3. Écrire à l'aide des quantificateurs la phrase suivante et sa négation : « Pour chaque réel, je peux trouver un entier relatif tel que leur produit soit strictement plus grand que 1 ».<br>Puis « Pour tout entier n, il existe un unique réel x tel que exp(x) égale n ».",
+`<p><b>Phrase 1 :</b> « pour chaque réel » $\\to \\forall x\\in\\mathbb{R}$ ; « je peux trouver un entier relatif » $\\to \\exists n\\in\\mathbb{Z}$ ; « leur produit strictement plus grand que 1 » $\\to xn>1$.<br>
+Formalisation : $\\forall x\\in\\mathbb{R}, \\exists n\\in\\mathbb{Z},\\ xn>1$.</p>
+<p><b>Négation :</b> on inverse les quantificateurs et on nie l'inégalité finale ($>$ devient $\\leq$) :<br>
+$\\exists x\\in\\mathbb{R}, \\forall n\\in\\mathbb{Z},\\ xn\\leq 1$.</p>
+<p><b>Phrase 2 :</b> « pour tout entier $n$ » $\\to \\forall n$ ; « il existe un unique réel $x$ » $\\to \\exists! x\\in\\mathbb{R}$ ; « $\\exp(x)$ égale $n$ » $\\to e^x=n$.<br>
+Formalisation : $\\forall n,\\ \\exists! x\\in\\mathbb{R},\\ e^x=n$. (Le symbole $\\exists!$ signifie « il existe un unique ».)</p>`);
+
+add(CH1,M1,"Exercice 1.2","Soient $a,b \\geq 0$. Montrer par l'absurde que si $\\dfrac{a}{1+b} = \\dfrac{b}{1+a}$ alors $a=b$.",
+`<p><b>Étape 1 — mise en équation.</b> Comme $a,b\\geq0$, on a $1+a>0$ et $1+b>0$, donc on peut multiplier les deux membres par $(1+a)(1+b)$ sans changer le sens de l'égalité : $a(1+a) = b(1+b)$, c'est-à-dire $a+a^2 = b+b^2$.</p>
+<p><b>Étape 2 — on factorise.</b> On réarrange : $a^2-b^2 + a-b = 0$, soit $(a-b)(a+b) + (a-b) = 0$, soit encore $(a-b)(a+b+1)=0$.</p>
+<p><b>Étape 3 — raisonnement par l'absurde.</b> Supposons que $a\\neq b$ (c'est l'hypothèse absurde). Alors $(a-b)$ n'est pas nul, donc pour que le produit $(a-b)(a+b+1)$ soit nul, il faudrait que $a+b+1=0$. Mais $a,b\\geq 0$ donc $a+b+1\\geq 1 >0$ : c'est impossible. On obtient une contradiction.</p>
+<p><b>Conclusion :</b> l'hypothèse « $a\\neq b$ » est donc fausse, ce qui prouve que $a=b$.</p>`);
+
+add(CH1,M1,"Exercice 1.3","À l'aide d'une disjonction de cas sur le signe de $x-1$, montrer que pour tout $x \\in \\mathbb{R}$, $|x-1| \\leq x^2-x+1$.",
+`<p>On distingue deux cas selon le signe de $x-1$, car c'est cette expression qui est dans la valeur absolue.</p>
+<p><b>Cas 1 : $x\\geq 1$.</b> Alors $x-1\\geq0$ donc $|x-1|=x-1$. Il faut montrer $x-1 \\leq x^2-x+1$, ce qui équivaut à $0 \\leq x^2-2x+2$. Or $x^2-2x+2 = (x-1)^2+1$, qui est toujours $\\geq 1 >0$ (une somme d'un carré et de 1). L'inégalité est donc vraie dans ce cas.</p>
+<p><b>Cas 2 : $x\\lt1$.</b> Alors $x-1\\lt0$ donc $|x-1| = -(x-1) = 1-x$. Il faut montrer $1-x \\leq x^2-x+1$, ce qui équivaut (en simplifiant les $-x$ et le $1$ des deux côtés) à $0 \\leq x^2$, qui est toujours vrai (un carré est positif ou nul).</p>
+<p><b>Conclusion :</b> dans les deux cas possibles, l'inégalité $|x-1|\\leq x^2-x+1$ est vérifiée ; comme tout réel $x$ est soit $\\geq1$ soit $\\lt1$, l'inégalité est vraie pour tout $x\\in\\mathbb{R}$.</p>`);
+
+add(CH1,M1,"Exercice 1.4","Montrer que l'assertion suivante est fausse « Tout entier positif est somme de trois carrés d'entiers ».",
+`<p><b>Méthode :</b> pour montrer qu'une phrase commençant par « tout » est fausse, il suffit de trouver <b>un seul contre-exemple</b> qui ne vérifie pas la propriété.</p>
+<p><b>Contre-exemple : $n=7$.</b> Les carrés d'entiers inférieurs ou égaux à 7 sont $0,1,4$ (on ne peut pas utiliser $9=3^2$ car il dépasse déjà 7 à lui seul). On liste toutes les sommes possibles de trois nombres pris parmi $\\{0,1,4\\}$ (avec répétition) :<br>
+$0+0+0=0$, $0+0+1=1$, $0+1+1=2$, $1+1+1=3$, $0+0+4=4$, $0+1+4=5$, $1+1+4=6$, $0+4+4=8$, $1+4+4=9$, $4+4+4=12$.</p>
+<p>On constate que <b>7 n'apparaît dans aucune de ces sommes</b>. Il est donc impossible d'écrire $7$ comme somme de trois carrés d'entiers.</p>
+<p><b>Conclusion :</b> l'assertion est fausse, puisqu'elle échoue pour $n=7$.</p>`);
+
+add(CH1,M1,"Exercice 1.5","Résoudre dans $\\mathbb{R}$ l'équation $(E)$ : $\\dfrac{x^3-3x^2+2x}{x-1}=2x^2$.<br>L'ensemble des solutions est-il le même si l'on cherche à résoudre cette équation dans $\\mathbb{N}$ ? dans $\\mathbb{Z}$ ?",
+`<p><b>Étape 1 — domaine de définition.</b> Il faut $x-1\\neq 0$, donc $x\\neq 1$.</p>
+<p><b>Étape 2 — on factorise le numérateur.</b> $x^3-3x^2+2x = x(x^2-3x+2) = x(x-1)(x-2)$ (car $x^2-3x+2$ a pour racines $1$ et $2$).</p>
+<p><b>Étape 3 — on simplifie.</b> Pour $x\\neq1$, on peut simplifier par $(x-1)$ : $\\dfrac{x(x-1)(x-2)}{x-1} = x(x-2)$. L'équation devient $x(x-2) = 2x^2$.</p>
+<p><b>Étape 4 — on résout.</b> $x^2-2x = 2x^2 \\iff 0 = x^2+2x \\iff x(x+2)=0$. Donc $x=0$ ou $x=-2$. Ces deux valeurs sont bien différentes de $1$, donc valides.</p>
+<p><b>Conclusion dans $\\mathbb{R}$ (et dans $\\mathbb{Z}$) :</b> $S=\\{-2\\,;\\,0\\}$ — comme $-2$ et $0$ sont des entiers relatifs, l'ensemble des solutions dans $\\mathbb{Z}$ est le même : $\\{-2\\,;\\,0\\}$.</p>
+<p><b>Dans $\\mathbb{N}$ :</b> $-2$ n'est pas un entier naturel (les naturels sont $0,1,2,\\dots$). Il ne reste que $0$. L'ensemble des solutions dans $\\mathbb{N}$ est donc $\\{0\\}$, ce qui est <b>différent</b> de l'ensemble trouvé dans $\\mathbb{R}$ et $\\mathbb{Z}$.</p>`);
+
+add(CH1,M1,"Exercice 1.6","si $f$ est strictement croissante ($\\forall x,y \\in D, x\\lt y \\implies f(x)\\lt f(y)$) alors $f$ est injective.",
+`<p><b>Rappel :</b> $f$ est injective signifie que deux antécédents distincts ont toujours des images distinctes : $x\\neq y \\implies f(x)\\neq f(y)$.</p>
+<p><b>Étape 1.</b> Soient $x,y\\in D$ avec $x\\neq y$. Comme $x$ et $y$ sont deux réels distincts, l'un est forcément plus petit que l'autre : soit $x\\lt y$, soit $y\\lt x$ (on dit qu'on raisonne « sans perte de généralité », les deux cas sont symétriques).</p>
+<p><b>Étape 2.</b> Si $x\\lt y$, la stricte croissance donne directement $f(x)\\lt f(y)$, donc en particulier $f(x)\\neq f(y)$. Si $y\\lt x$, de même $f(y)\\lt f(x)$ donc $f(x)\\neq f(y)$.</p>
+<p><b>Conclusion :</b> dans tous les cas, $x\\neq y$ entraîne $f(x)\\neq f(y)$ : $f$ est bien injective.</p>`);
+
+add(CH1,M1,"Exercice 1.6","si $f$ est strictement décroissante ($\\forall x,y \\in D, x\\lt y \\implies f(x)>f(y)$) alors $f$ est injective.",
+`<p>Même principe que pour la croissance. Soient $x,y\\in D$ avec $x\\neq y$. Quitte à échanger les noms, supposons $x\\lt y$.</p>
+<p>La stricte décroissance donne $f(x)>f(y)$, donc en particulier $f(x)\\neq f(y)$.</p>
+<p><b>Conclusion :</b> comme pour toute paire $x\\neq y$ on obtient $f(x)\\neq f(y)$, $f$ est injective.</p>`);
+
+add(CH1,M1,"Exercice 1.7","L'application $c: \\mathbb{R} \\to \\mathbb{R}, x \\mapsto x^2$ est-elle injective ? surjective ? bijective ?",
+`<p><b>Injective ?</b> Non : on peut trouver deux réels distincts ayant la même image, par exemple $c(1)=1$ et $c(-1)=1$, alors que $1\\neq-1$.</p>
+<p><b>Surjective ?</b> Non : il faudrait que tout réel $y$ de l'ensemble d'arrivée $\\mathbb{R}$ ait un antécédent. Or $y=-1$ n'a pas d'antécédent réel, car un carré $x^2$ n'est jamais négatif.</p>
+<p><b>Bijective ?</b> Non, puisqu'elle n'est ni injective ni surjective.</p>`);
+
+add(CH1,M1,"Exercice 1.7","En changeant seulement son ensemble de départ ou d'arrivée, définir à partir de l'application $c$ une application injective mais pas surjective, puis surjective mais pas injective et enfin, bijective.",
+`<p><b>1) Injective mais pas surjective :</b> on restreint seulement l'ensemble de départ à $[0,+\\infty[$ : $c_1 : [0,+\\infty[ \\to \\mathbb{R},\\ x\\mapsto x^2$. Sur $[0,+\\infty[$, la fonction carré est strictement croissante, donc injective (exercice 1.6). Elle n'est pas surjective car les réels négatifs de l'ensemble d'arrivée n'ont toujours pas d'antécédent.</p>
+<p><b>2) Surjective mais pas injective :</b> on restreint seulement l'ensemble d'arrivée à $[0,+\\infty[$ : $c_2 : \\mathbb{R} \\to [0,+\\infty[,\\ x\\mapsto x^2$. Elle est surjective car tout $y\\geq0$ admet l'antécédent $\\sqrt{y}$. Elle n'est pas injective car $1$ et $-1$ ont toujours la même image.</p>
+<p><b>3) Bijective :</b> on restreint les deux à la fois : $c_3 : [0,+\\infty[ \\to [0,+\\infty[,\\ x\\mapsto x^2$. Elle est injective (croissance stricte sur $[0,+\\infty[$) et surjective (tout $y\\geq0$ a l'antécédent $\\sqrt{y}\\geq0$), donc bijective.</p>`);
+
+add(CH1,M1,"Exercice 1.8","On définit une suite de nombres par $u_1=1$ et pour tout entier $n\\geq1$, $u_{n+1}=\\dfrac{u_n}{1+u_n}$.<br>Montrer que la suite ci-dessus vérifie pour tout entier $n$ : $u_n=\\dfrac{1}{n}$.",
+`<p>On raisonne par <b>récurrence</b> sur $n\\geq1$.</p>
+<p><b>Initialisation ($n=1$) :</b> on a $u_1=1$ par définition, et $\\dfrac1n=\\dfrac11=1$ : la formule est vraie au rang $1$.</p>
+<p><b>Hérédité :</b> on suppose que pour un entier $n\\geq1$ donné, on a $u_n=\\dfrac1n$ (hypothèse de récurrence). On calcule alors $u_{n+1}$ grâce à la relation de la suite :
+$$u_{n+1}=\\frac{u_n}{1+u_n}=\\frac{\\frac1n}{1+\\frac1n}=\\frac{\\frac1n}{\\frac{n+1}{n}}=\\frac1n \\times \\frac{n}{n+1}=\\frac{1}{n+1}.$$
+On retrouve exactement la formule voulue au rang $n+1$.</p>
+<p><b>Conclusion :</b> l'initialisation et l'hérédité étant vérifiées, par le principe de récurrence, $u_n=\\dfrac1n$ pour tout entier $n\\geq1$.</p>`);
+
+add(CH1,M1,"Exercice 1.9","1. Écrire avec des pointillés les sommes : $A=\\sum_{k=2}^{50}k^2$, $B=\\sum_{p=1}^{2019}e^{\\sqrt{p}}$.",
+`<p>Il suffit d'écrire les premiers termes, des points de suspension, puis le dernier terme.</p>
+<p>$A = 2^2+3^2+4^2+\\cdots+50^2$.</p>
+<p>$B = e^{\\sqrt1}+e^{\\sqrt2}+e^{\\sqrt3}+\\cdots+e^{\\sqrt{2019}}$.</p>`);
+
+add(CH1,M1,"Exercice 1.9","2. Écrire avec $\\sum$ : $C=\\ln(2)+\\ln(3)+\\cdots+\\ln(42)$, $D=2+4+6+\\cdots+50$, $E=\\dfrac{1}{1+2}+\\dfrac{2}{2+3}+\\cdots+\\dfrac{3001}{3001+3002}$.",
+`<p><b>$C$ :</b> le terme général est $\\ln(k)$, et $k$ va de $2$ à $42$ : $C=\\displaystyle\\sum_{k=2}^{42}\\ln(k)$.</p>
+<p><b>$D$ :</b> les termes sont les entiers pairs de $2$ à $50$, c'est-à-dire $2k$ pour $k$ allant de $1$ à $25$ (car $2\\times25=50$) : $D=\\displaystyle\\sum_{k=1}^{25}2k$.</p>
+<p><b>$E$ :</b> chaque terme est de la forme $\\dfrac{k}{k+(k+1)}$ (numérateur $k$, dénominateur $k$ plus le suivant), avec $k$ allant de $1$ (premier terme $\\frac1{1+2}$) à $3001$ (dernier terme $\\frac{3001}{3001+3002}$) : $E=\\displaystyle\\sum_{k=1}^{3001}\\frac{k}{2k+1}$.</p>`);
+
+add(CH1,M1,"Exercice 1.9","3. Donner le nombre de termes de chacune des sommes A, B, C, D et E.",
+`<p><b>Règle :</b> pour une somme $\\sum_{k=p}^{q}$, le nombre de termes est $q-p+1$.</p>
+<p>$A$ (k de 2 à 50) : $50-2+1=49$ termes.</p>
+<p>$B$ (p de 1 à 2019) : $2019-1+1=2019$ termes.</p>
+<p>$C$ (k de 2 à 42) : $42-2+1=41$ termes.</p>
+<p>$D$ (k de 1 à 25 dans l'écriture $\\sum 2k$) : $25-1+1=25$ termes.</p>
+<p>$E$ (k de 1 à 3001) : $3001-1+1=3001$ termes.</p>`);
+
+add(CH1,M1,"Exercice 1.9","4. Calculer le produit $\\prod_{i=0}^{n}\\dfrac{i+1}{i+2}$.",
+`<p>On écrit les premiers et derniers termes du produit pour voir apparaître une simplification en chaîne (« produit télescopique ») :
+$$\\prod_{i=0}^{n}\\frac{i+1}{i+2} = \\frac{1}{2}\\times\\frac{2}{3}\\times\\frac{3}{4}\\times\\cdots\\times\\frac{n}{n+1}\\times\\frac{n+1}{n+2}.$$</p>
+<p>Le numérateur de chaque fraction (à partir de la 2e) est égal au dénominateur de la fraction précédente : ils s'annulent deux à deux. Il ne reste que le premier numérateur ($1$) et le dernier dénominateur ($n+2$).</p>
+<p><b>Résultat :</b> $\\prod_{i=0}^{n}\\dfrac{i+1}{i+2} = \\dfrac{1}{n+2}$.</p>`);
+
+add(CH1,M1,"Exercice 1.9","5. Écrire les sommes suivantes, de sorte que le premier indice soit 0 : $\\sum_{i=2}^{10}\\sin(i)$ et $\\sum_{n=-5}^{30}\\dfrac{n-2}{n+7}$.",
+`<p><b>Méthode :</b> on effectue un changement d'indice pour que le nouvel indice démarre à 0.</p>
+<p><b>Première somme :</b> on pose $j=i-2$, donc $i=j+2$. Quand $i=2$, $j=0$ ; quand $i=10$, $j=8$.
+$$\\sum_{i=2}^{10}\\sin(i) = \\sum_{j=0}^{8}\\sin(j+2).$$</p>
+<p><b>Deuxième somme :</b> on pose $j=n+5$, donc $n=j-5$. Quand $n=-5$, $j=0$ ; quand $n=30$, $j=35$. On remplace $n$ par $j-5$ dans le terme général :
+$$\\sum_{n=-5}^{30}\\frac{n-2}{n+7} = \\sum_{j=0}^{35}\\frac{(j-5)-2}{(j-5)+7} = \\sum_{j=0}^{35}\\frac{j-7}{j+2}.$$</p>`);
+
+add(CH1,M1,"Exercice 1.10","1) Montrer que $\\sum_{k=1}^{n}1=n$ (par récurrence).",
+`<p><b>Initialisation ($n=1$) :</b> la somme n'a qu'un seul terme, $\\sum_{k=1}^{1}1=1$, et on a bien $n=1$. Égalité vraie.</p>
+<p><b>Hérédité :</b> on suppose $\\sum_{k=1}^{n}1=n$ pour un $n$ donné. Alors
+$$\\sum_{k=1}^{n+1}1=\\sum_{k=1}^{n}1 \\;+\\; 1 = n+1.$$
+On retrouve la formule au rang $n+1$.</p>
+<p><b>Conclusion :</b> par récurrence, $\\sum_{k=1}^{n}1=n$ pour tout $n\\in\\mathbb{N}$ (avec $n\\geq1$).</p>`);
+
+add(CH1,M1,"Exercice 1.10","2) Montrer que $\\sum_{k=1}^{n}k=\\dfrac{n(n+1)}{2}$ (par récurrence).",
+`<p><b>Initialisation ($n=1$) :</b> $\\sum_{k=1}^{1}k=1$, et $\\dfrac{1\\times2}{2}=1$. Égalité vraie.</p>
+<p><b>Hérédité :</b> on suppose $\\sum_{k=1}^{n}k=\\dfrac{n(n+1)}{2}$. On ajoute le terme suivant, $(n+1)$ :
+$$\\sum_{k=1}^{n+1}k = \\sum_{k=1}^{n}k+(n+1) = \\frac{n(n+1)}{2}+(n+1) = (n+1)\\left(\\frac{n}{2}+1\\right) = \\frac{(n+1)(n+2)}{2}.$$
+C'est exactement la formule pour $n+1$.</p>
+<p><b>Conclusion :</b> par récurrence, la formule est vraie pour tout $n\\in\\mathbb{N}$.</p>`);
+
+add(CH1,M1,"Exercice 1.10","3) Montrer que $\\forall x \\in \\mathbb{C}\\setminus\\{1\\}, \\sum_{k=0}^{n}x^k=\\dfrac{1-x^{n+1}}{1-x}$ (preuve directe, puis par récurrence).",
+`<p><b>Preuve directe.</b> On note $S=\\sum_{k=0}^{n}x^k$. L'astuce consiste à calculer $(1-x)\\,S$ :
+$$(1-x)S = S - xS = \\sum_{k=0}^{n}x^k \\;-\\; \\sum_{k=0}^{n}x^{k+1} = \\sum_{k=0}^{n}x^k \\;-\\; \\sum_{k=1}^{n+1}x^k.$$
+En comparant les deux sommes, presque tous les termes ($x^1,x^2,\\dots,x^n$) apparaissent des deux côtés et s'annulent (« télescopage »). Il ne reste que le premier terme de la première somme ($x^0=1$) et l'opposé du dernier terme de la seconde ($-x^{n+1}$) :
+$$(1-x)S = 1 - x^{n+1}.$$</p>
+<p>Comme $x\\neq1$, on a $1-x\\neq0$, donc on peut diviser : $S=\\dfrac{1-x^{n+1}}{1-x}$.</p>
+<p><b>Par récurrence (variante) :</b> initialisation $n=0$ : $S=x^0=1=\\frac{1-x}{1-x}$, vrai. Hérédité : si $\\sum_{k=0}^{n}x^k=\\frac{1-x^{n+1}}{1-x}$, alors $\\sum_{k=0}^{n+1}x^k = \\frac{1-x^{n+1}}{1-x}+x^{n+1} = \\frac{1-x^{n+1}+x^{n+1}(1-x)}{1-x} = \\frac{1-x^{n+2}}{1-x}$, ce qui est la formule au rang $n+1$.</p>`);
+
+add(CH1,M1,"Exercice 1.10","On calculera ensuite $\\sum_{k=1}^{n}(2k-1)$.",
+`<p>On décompose la somme en deux sommes de référence (celles démontrées juste avant) :
+$$\\sum_{k=1}^{n}(2k-1) = 2\\sum_{k=1}^{n}k \\;-\\; \\sum_{k=1}^{n}1 = 2\\times\\frac{n(n+1)}{2} - n = n(n+1)-n = n^2+n-n = n^2.$$</p>
+<p><b>Résultat :</b> $\\sum_{k=1}^{n}(2k-1)=n^2$ (c'est la somme des $n$ premiers nombres impairs, un résultat classique).</p>`);
+
+add(CH1,M1,"Exercice 1.11","Calculer $\\binom{n}{0}+\\binom{n}{1}+\\cdots+\\binom{n}{k}+\\cdots+\\binom{n}{n}=\\sum_{k=0}^{n}\\binom{n}{k}$ (de deux façons différentes).",
+`<p><b>Méthode 1 — formule du binôme.</b> On sait que $(a+b)^n=\\sum_{k=0}^{n}\\binom{n}{k}a^{n-k}b^k$. En prenant $a=b=1$, on obtient $(1+1)^n=\\sum_{k=0}^{n}\\binom{n}{k}$, c'est-à-dire $2^n=\\sum_{k=0}^{n}\\binom{n}{k}$.</p>
+<p><b>Méthode 2 — dénombrement.</b> $\\binom{n}{k}$ compte le nombre de sous-ensembles à $k$ éléments d'un ensemble à $n$ éléments. En sommant sur toutes les tailles possibles $k=0,\\dots,n$, on compte donc <b>tous</b> les sous-ensembles possibles, quelle que soit leur taille. Or, pour construire un sous-ensemble, on choisit indépendamment pour chacun des $n$ éléments s'il est « dedans » ou « dehors » : cela fait $2$ choix par élément, donc $2^n$ sous-ensembles au total.</p>
+<p><b>Conclusion (les deux méthodes s'accordent) :</b> $\\sum_{k=0}^{n}\\binom{n}{k}=2^n$.</p>`);
+
+add(CH1,M1,"Exercice 1.12","Développer $(a-b)^4$.",
+`<p>On utilise la formule du binôme $(a+b)^n=\\sum_{k=0}^{n}\\binom{n}{k}a^{n-k}b^k$ avec $b$ remplacé par $-b$, et $n=4$. Les coefficients binomiaux de la ligne $n=4$ du triangle de Pascal sont $1,4,6,4,1$.</p>
+<p>$$(a-b)^4 = a^4 -4a^3b+6a^2b^2-4ab^3+b^4.$$</p>
+<p>Le signe alterne à chaque terme car chaque puissance de $(-b)$ change de signe selon que l'exposant est pair ou impair.</p>`);
+
+add(CH1,M1,"Exercice 1.12","Développer $(a+b)^5$.",
+`<p>On utilise la formule du binôme avec $n=5$ ; les coefficients de la ligne $5$ du triangle de Pascal sont $1,5,10,10,5,1$.</p>
+<p>$$(a+b)^5 = a^5+5a^4b+10a^3b^2+10a^2b^3+5ab^4+b^5.$$</p>`);
+
+add(CH1,M1,"Exercice 1.13","Que donne la formule du binôme pour $a=-1,b=+1$ ? En déduire que dans un ensemble à $n$ éléments il y a autant de parties de cardinal pair que de cardinal impair.",
+`<p><b>Étape 1.</b> Pour $n\\geq1$, $(a+b)^n=(-1+1)^n=0^n=0$. Or la formule du binôme donne
+$$0=\\sum_{k=0}^{n}\\binom{n}{k}(-1)^{n-k}(1)^k=\\sum_{k=0}^{n}(-1)^{n-k}\\binom{n}{k}.$$</p>
+<p><b>Étape 2 — on simplifie le signe.</b> On peut écrire $(-1)^{n-k}=(-1)^n(-1)^k$, donc l'égalité devient $(-1)^n\\sum_{k=0}^{n}(-1)^k\\binom{n}{k}=0$. Comme $(-1)^n\\neq0$, on peut diviser : $\\sum_{k=0}^{n}(-1)^k\\binom{n}{k}=0$.</p>
+<p><b>Étape 3 — interprétation.</b> Dans cette somme, les termes avec $k$ pair ont un signe $+$, ceux avec $k$ impair un signe $-$. L'égalité à $0$ donne donc :
+$$\\sum_{k \\text{ pair}}\\binom{n}{k} = \\sum_{k \\text{ impair}}\\binom{n}{k}.$$</p>
+<p>Or $\\binom{n}{k}$ est le nombre de sous-ensembles (parties) de cardinal $k$. Cette égalité signifie exactement qu'il y a autant de parties de cardinal pair que de parties de cardinal impair (et chacune de ces deux quantités vaut $2^{n-1}$, puisque leur somme totale est $2^n$).</p>`);
+
+add(CH1,M1,"Exercice 1.14","1. « $2x+3>0$ seulement si $x>0$ » : écrire l'implication et sa réciproque, puis dire lesquelles sont vraies.",
+`<p><b>Traduction :</b> « P seulement si Q » signifie « P $\\implies$ Q ». Ici : $2x+3>0 \\implies x>0$.<br><b>Réciproque :</b> $x>0 \\implies 2x+3>0$.</p>
+<p><b>L'implication de départ est-elle vraie ?</b> $2x+3>0 \\iff x>-\\frac32$. Prenons $x=-1$ : on a bien $-1>-\\frac32$ donc $2x+3>0$ (en effet $2(-1)+3=1>0$), mais $x=-1$ n'est pas $>0$. C'est un contre-exemple : <b>l'implication est fausse</b>.</p>
+<p><b>La réciproque est-elle vraie ?</b> Si $x>0$, alors $2x+3 > 2\\times0+3=3>0$. Donc oui, <b>la réciproque est vraie</b>.</p>`);
+
+add(CH1,M1,"Exercice 1.14","2. « Pour que $x=2$, il faut que $x^2=4$ » : écrire l'implication et sa réciproque, puis dire lesquelles sont vraies.",
+`<p><b>Traduction :</b> « pour que P, il faut Q » signifie « P $\\implies$ Q » (Q est une condition nécessaire à P). Ici : $x=2 \\implies x^2=4$.<br><b>Réciproque :</b> $x^2=4 \\implies x=2$.</p>
+<p><b>L'implication est-elle vraie ?</b> Si $x=2$ alors $x^2=2^2=4$. C'est vrai, <b>l'implication est vraie</b>.</p>
+<p><b>La réciproque est-elle vraie ?</b> Prenons $x=-2$ : on a $x^2=4$ mais $x\\neq2$. Contre-exemple : <b>la réciproque est fausse</b>.</p>`);
+
+add(CH1,M1,"Exercice 1.14","3. « Toute fonction décroissante $f:[0;+\\infty[\\to\\mathbb{R}$ est majorée » : écrire l'implication et sa réciproque, puis dire lesquelles sont vraies.",
+`<p><b>Traduction :</b> $f$ décroissante sur $[0,+\\infty[ \\implies f$ majorée.<br><b>Réciproque :</b> $f$ majorée $\\implies f$ décroissante.</p>
+<p><b>L'implication est-elle vraie ?</b> Si $f$ est décroissante sur $[0,+\\infty[$, alors pour tout $x\\geq0$, comme $0\\leq x$, la décroissance donne $f(x)\\leq f(0)$. Donc $f(0)$ est un majorant de $f$ : <b>l'implication est vraie</b>.</p>
+<p><b>La réciproque est-elle vraie ?</b> Une fonction bornée n'est pas forcément décroissante. Contre-exemple : $f(x)=\\sin(x)$ est majorée (par $1$) mais elle oscille, elle n'est pas décroissante. <b>La réciproque est fausse</b>.</p>`);
+
+add(CH1,M1,"Exercice 1.15","1. Démontrer par récurrence : $\\sum_{p=0}^{n}(2p+1)=(n+1)^2$ (où $n\\in\\mathbb{N}$).",
+`<p><b>Initialisation ($n=0$) :</b> $\\sum_{p=0}^{0}(2p+1)=2(0)+1=1$, et $(0+1)^2=1$. Égalité vraie.</p>
+<p><b>Hérédité :</b> on suppose $\\sum_{p=0}^{n}(2p+1)=(n+1)^2$. On ajoute le terme suivant ($p=n+1$) :
+$$\\sum_{p=0}^{n+1}(2p+1) = (n+1)^2+\\big(2(n+1)+1\\big) = n^2+2n+1+2n+3 = n^2+4n+4=(n+2)^2.$$
+Or $(n+2)^2=\\big((n+1)+1\\big)^2$ : c'est bien la formule au rang $n+1$.</p>
+<p><b>Conclusion :</b> par récurrence, la formule est vraie pour tout $n\\in\\mathbb{N}$.</p>`);
+
+add(CH1,M1,"Exercice 1.15","2. Démontrer par récurrence : $\\forall n\\in\\mathbb{N},\\ (e^x)^n=e^{nx}$ où $x\\in\\mathbb{C}$.",
+`<p><b>Initialisation ($n=0$) :</b> $(e^x)^0=1$ et $e^{0\\times x}=e^0=1$. Égalité vraie.</p>
+<p><b>Hérédité :</b> on suppose $(e^x)^n=e^{nx}$. On multiplie les deux membres par $e^x$ :
+$$(e^x)^{n+1}=(e^x)^n\\times e^x = e^{nx}\\times e^x = e^{nx+x}=e^{(n+1)x},$$
+en utilisant la propriété fondamentale de l'exponentielle $e^ae^b=e^{a+b}$. On obtient la formule au rang $n+1$.</p>
+<p><b>Conclusion :</b> par récurrence, $\\forall n\\in\\mathbb{N},(e^x)^n=e^{nx}$.</p>`);
+
+add(CH1,M1,"Exercice 1.15","3. Pour tout $n\\in\\mathbb{N}$, la fonction définie sur $\\mathbb{R}$ par $x\\mapsto x^n$ est dérivable et a pour dérivée $x\\mapsto nx^{n-1}$ (on utilisera la formule de la dérivée d'un produit).",
+`<p><b>Initialisation ($n=1$) :</b> la fonction $x\\mapsto x$ est dérivable, de dérivée $1$. Or la formule donne $1\\times x^{0}=1$. Vrai.</p>
+<p><b>Hérédité :</b> on suppose que $x\\mapsto x^n$ est dérivable de dérivée $x\\mapsto nx^{n-1}$. On écrit $x^{n+1}=x^n\\times x$ : c'est un produit de deux fonctions dérivables ($x^n$ par hypothèse, $x$ trivialement). On applique la règle de dérivation d'un produit $(fg)'=f'g+fg'$ avec $f(x)=x^n$ et $g(x)=x$ :
+$$(x^{n+1})' = (x^n)'\\times x + x^n\\times (x)' = nx^{n-1}\\times x + x^n\\times1 = nx^n+x^n=(n+1)x^n=(n+1)x^{(n+1)-1}.$$
+C'est bien la formule au rang $n+1$.</p>
+<p><b>Conclusion :</b> par récurrence, la formule de dérivation est vraie pour tout $n\\geq1$ (et pour $n=0$, $x^0=1$ est constante, de dérivée $0$).</p>`);
+
+add(CH1,M1,"Exercice 1.15","4. Démontrer par récurrence : pour tout entier naturel $n$, $n^3-n$ est divisible par 3.",
+`<p><b>Initialisation ($n=0$) :</b> $0^3-0=0=3\\times0$, qui est bien divisible par $3$.</p>
+<p><b>Hérédité :</b> on suppose qu'il existe un entier $k$ tel que $n^3-n=3k$ (hypothèse de récurrence). On calcule $(n+1)^3-(n+1)$ en développant :
+$$(n+1)^3-(n+1) = n^3+3n^2+3n+1-n-1 = (n^3-n) + 3n^2+3n = 3k+3n^2+3n = 3(k+n^2+n).$$
+C'est bien $3$ fois un entier, donc $(n+1)^3-(n+1)$ est divisible par $3$.</p>
+<p><b>Conclusion :</b> par récurrence, $n^3-n$ est divisible par $3$ pour tout $n\\in\\mathbb{N}$.</p>`);
+
+add(CH1,M1,"Exercice 1.15","5. Démontrer par récurrence : $\\sum_{k=1}^{n}\\dfrac1{k^2}\\leq 2-\\dfrac1n$ pour $n\\in\\mathbb{N}^*$.",
+`<p><b>Initialisation ($n=1$) :</b> $\\sum_{k=1}^{1}\\frac1{k^2}=1$ et $2-\\frac11=1$. On a bien $1\\leq1$ (égalité, donc l'inégalité large est vérifiée).</p>
+<p><b>Hérédité :</b> on suppose $\\sum_{k=1}^{n}\\frac1{k^2}\\leq2-\\frac1n$. On ajoute $\\frac{1}{(n+1)^2}$ des deux côtés :
+$$\\sum_{k=1}^{n+1}\\frac1{k^2} \\leq \\left(2-\\frac1n\\right)+\\frac{1}{(n+1)^2}.$$
+Il reste à vérifier que le membre de droite est $\\leq 2-\\dfrac1{n+1}$, c'est-à-dire que
+$$\\frac{1}{(n+1)^2} \\leq \\frac1n-\\frac1{n+1} = \\frac{(n+1)-n}{n(n+1)}=\\frac{1}{n(n+1)}.$$
+Cette inégalité $\\dfrac{1}{(n+1)^2}\\leq\\dfrac{1}{n(n+1)}$ équivaut (en inversant, les deux membres étant positifs) à $n(n+1)\\leq(n+1)^2$, c'est-à-dire $n\\leq n+1$, qui est toujours vrai.</p>
+<p><b>Conclusion :</b> l'inégalité se transmet bien du rang $n$ au rang $n+1$ ; par récurrence, elle est vraie pour tout $n\\in\\mathbb{N}^*$.</p>`);
+
+add(CH1,M1,"Exercice 1.16","a) Simplifier $\\sum_{k=0}^{n}e^k$.",
+`<p>C'est une somme géométrique de raison $e$ (chaque terme est le précédent multiplié par $e$), avec premier terme $e^0=1$. On applique la formule $\\sum_{k=0}^{n}x^k=\\dfrac{1-x^{n+1}}{1-x}$ (exercice 1.10.3) avec $x=e$ :</p>
+<p>$$\\sum_{k=0}^{n}e^k = \\frac{1-e^{n+1}}{1-e} = \\frac{e^{n+1}-1}{e-1}.$$</p>`);
+
+add(CH1,M1,"Exercice 1.16","b) Simplifier $\\sum_{k=0}^{2n}3^{n+k}$.",
+`<p>On sort le facteur constant $3^n$ (qui ne dépend pas de $k$) de la somme :
+$$\\sum_{k=0}^{2n}3^{n+k} = 3^n\\sum_{k=0}^{2n}3^{k}.$$
+La somme restante est géométrique de raison $3$, avec $k$ allant de $0$ à $2n$ (donc $2n+1$ termes) :
+$$\\sum_{k=0}^{2n}3^k = \\frac{1-3^{2n+1}}{1-3} = \\frac{3^{2n+1}-1}{2}.$$</p>
+<p><b>Résultat :</b> $\\sum_{k=0}^{2n}3^{n+k} = 3^n\\times\\dfrac{3^{2n+1}-1}{2}$.</p>`);
+
+add(CH1,M1,"Exercice 1.16","c) Simplifier $\\sum_{k=8}^{21}\\dfrac{2k-5}{6}$.",
+`<p>On met $\\frac16$ en facteur (constante indépendante de $k$), puis on sépare en deux sommes de référence :
+$$\\sum_{k=8}^{21}\\frac{2k-5}{6} = \\frac16\\left(2\\sum_{k=8}^{21}k \\;-\\; 5\\sum_{k=8}^{21}1\\right).$$</p>
+<p>Nombre de termes : $21-8+1=14$, donc $\\sum_{k=8}^{21}1=14$.<br>
+Pour $\\sum_{k=8}^{21}k$, on utilise $\\sum_{k=1}^{21}k-\\sum_{k=1}^{7}k = \\frac{21\\times22}{2}-\\frac{7\\times8}{2}=231-28=203$.</p>
+<p>On obtient : $\\frac16\\big(2\\times203-5\\times14\\big)=\\frac16(406-70)=\\frac{336}{6}=56.$</p>
+<p><b>Résultat :</b> $\\sum_{k=8}^{21}\\dfrac{2k-5}{6}=56$.</p>`);
+
+add(CH1,M1,"Exercice 1.16","d) Simplifier $\\sum_{k=1}^{n}\\ln\\!\\left(\\dfrac{k}{k+1}\\right)$.",
+`<p>On utilise la propriété du logarithme $\\ln\\left(\\frac{a}{b}\\right)=\\ln(a)-\\ln(b)$ pour chaque terme :
+$$\\sum_{k=1}^{n}\\ln\\!\\left(\\frac{k}{k+1}\\right) = \\sum_{k=1}^{n}\\big(\\ln(k)-\\ln(k+1)\\big).$$
+C'est une somme télescopique : en écrivant les premiers termes, $\\big(\\ln1-\\ln2\\big)+\\big(\\ln2-\\ln3\\big)+\\cdots+\\big(\\ln n-\\ln(n+1)\\big)$, tous les termes intermédiaires s'annulent deux à deux. Il ne reste que $\\ln(1)-\\ln(n+1) = -\\ln(n+1)$ (car $\\ln1=0$).</p>
+<p><b>Résultat :</b> $\\sum_{k=1}^{n}\\ln\\!\\left(\\dfrac{k}{k+1}\\right) = -\\ln(n+1)$.</p>`);
+
+add(CH1,M1,"Exercice 1.16","e) Simplifier $\\sum_{j=0}^{n}\\dfrac{\\binom{n}{j}}{3^j}$.",
+`<p>On reconnaît la formule du binôme $\\sum_{j=0}^{n}\\binom{n}{j}a^{n-j}b^j=(a+b)^n$. Ici on écrit $\\dfrac{1}{3^j}=\\left(\\dfrac13\\right)^j$, donc :
+$$\\sum_{j=0}^{n}\\binom{n}{j}\\left(\\frac13\\right)^j = \\sum_{j=0}^{n}\\binom{n}{j}\\,1^{n-j}\\left(\\frac13\\right)^j = \\left(1+\\frac13\\right)^n.$$</p>
+<p><b>Résultat :</b> $\\sum_{j=0}^{n}\\dfrac{\\binom{n}{j}}{3^j} = \\left(\\dfrac43\\right)^n$.</p>`);
+
+add(CH1,M1,"Exercice 1.17","Déterminer de deux façons différentes le coefficient de $x^n$ dans le développement du polynôme $(1+x)^n(1+x)^n$. En déduire : $\\forall n\\in\\mathbb{N},\\ \\sum_{k=0}^{n}\\binom{n}{k}^2=\\binom{2n}{n}$.",
+`<p><b>Méthode 1 — en regroupant.</b> $(1+x)^n(1+x)^n=(1+x)^{2n}$. Par la formule du binôme, $(1+x)^{2n}=\\sum_{m=0}^{2n}\\binom{2n}{m}x^m$. Le coefficient de $x^n$ dans ce développement est donc directement $\\binom{2n}{n}$.</p>
+<p><b>Méthode 2 — en développant séparément.</b> On développe chaque facteur : $(1+x)^n=\\sum_{i=0}^{n}\\binom{n}{i}x^i$. En multipliant les deux développements, on obtient tous les produits $\\binom{n}{i}\\binom{n}{j}x^{i+j}$. Pour obtenir un terme en $x^n$, il faut $i+j=n$, c'est-à-dire $j=n-i$. Le coefficient de $x^n$ est donc
+$$\\sum_{i=0}^{n}\\binom{n}{i}\\binom{n}{n-i}.$$
+Or $\\binom{n}{n-i}=\\binom{n}{i}$ (propriété de symétrie du triangle de Pascal), donc ce coefficient vaut $\\sum_{i=0}^{n}\\binom{n}{i}^2$.</p>
+<p><b>Conclusion.</b> Les deux méthodes calculent le même coefficient (celui de $x^n$), donc :
+$$\\sum_{k=0}^{n}\\binom{n}{k}^2 = \\binom{2n}{n}.$$</p>`);
+
+/* ===================== CHAPITRE 2 ===================== */
+
+add(CH2,M2,"Exercice 2.1","Dans un parallélogramme, la somme des carrés des diagonales égale la somme des carrés des côtés.",
+`<p><b>Mise en place.</b> Soit un parallélogramme $ABCD$. On note $u$ l'affixe du vecteur $\\overrightarrow{AB}$ et $v$ l'affixe du vecteur $\\overrightarrow{AD}$. Comme $ABCD$ est un parallélogramme, $\\overrightarrow{BC}=\\overrightarrow{AD}$, donc le point $C$ a pour affixe (relativement à $A$) $u+v$. Les côtés ont pour longueurs $|u|$ (pour $AB$ et $DC$) et $|v|$ (pour $AD$ et $BC$).</p>
+<p><b>Diagonales.</b> $AC$ correspond au vecteur $u+v$, et $BD$ correspond au vecteur $\\overrightarrow{BD}=v-u$. On utilise la propriété $|z|^2=z\\bar z$ :
+$$AC^2+BD^2 = (u+v)(\\overline{u+v})+(v-u)(\\overline{v-u}) = (u+v)(\\bar u+\\bar v)+(v-u)(\\bar v-\\bar u).$$
+En développant chaque produit puis en additionnant, les termes croisés $u\\bar v$ et $v\\bar u$ s'annulent entre les deux parenthèses, et il reste :
+$$AC^2+BD^2 = 2u\\bar u+2v\\bar v = 2|u|^2+2|v|^2.$$</p>
+<p><b>Côtés.</b> $AB^2+BC^2+CD^2+DA^2 = |u|^2+|v|^2+|u|^2+|v|^2 = 2|u|^2+2|v|^2$ (car les côtés opposés ont la même longueur).</p>
+<p><b>Conclusion :</b> les deux quantités sont égales à $2|u|^2+2|v|^2$, donc la somme des carrés des diagonales égale la somme des carrés des côtés.</p>`);
+
+add(CH2,M2,"Exercice 2.2","Montrer que si $|\\Re z|\\leq|\\Re z'|$ et $|\\Im z|\\leq|\\Im z'|$ alors $|z|\\leq|z'|$, mais que la réciproque est fausse.",
+`<p><b>Sens direct.</b> Par définition, $|z|^2=(\\Re z)^2+(\\Im z)^2$. Comme $|\\Re z|\\leq|\\Re z'|$, en élevant au carré (fonction croissante pour des nombres positifs) : $(\\Re z)^2\\leq(\\Re z')^2$. De même $(\\Im z)^2\\leq(\\Im z')^2$. En additionnant ces deux inégalités :
+$$(\\Re z)^2+(\\Im z)^2 \\leq (\\Re z')^2+(\\Im z')^2, \\text{ c'est-à-dire } |z|^2\\leq|z'|^2.$$
+En prenant la racine carrée (les deux membres sont positifs), on obtient $|z|\\leq|z'|$.</p>
+<p><b>La réciproque est-elle vraie ?</b> On cherche un contre-exemple où $|z|\\leq|z'|$ mais où une des deux conditions sur les parties réelle/imaginaire est en défaut.</p>
+<p><b>Contre-exemple :</b> $z=2i$ et $z'=2$. On a $|z|=2=|z'|$, donc bien $|z|\\leq|z'|$. Mais $|\\Im z|=2$ alors que $|\\Im z'|=0$ : on a $2\\leq0$ qui est faux ! La condition sur les parties imaginaires n'est pas vérifiée, alors que $|z|\\leq|z'|$ l'était. La réciproque est donc fausse.</p>`);
+
+add(CH2,M2,"Exercice 2.3 — a)","Donner la forme algébrique et la forme exponentielle de $e^{i\\pi}$.",
+`<p>C'est déjà sous forme exponentielle : $e^{i\\pi}$ (module $1$, argument $\\pi$).</p>
+<p><b>Forme algébrique :</b> $e^{i\\pi}=\\cos(\\pi)+i\\sin(\\pi) = -1+0i = -1$.</p>`);
+
+add(CH2,M2,"Exercice 2.3 — b)","Donner la forme algébrique et la forme exponentielle de $-i$.",
+`<p><b>Forme algébrique :</b> déjà donnée, $-i = 0-1i$.</p>
+<p><b>Forme exponentielle :</b> le module est $|-i|=1$. Le point d'affixe $-i$ est sur l'axe imaginaire, en bas : son argument est $-\\dfrac{\\pi}{2}$. Donc $-i = e^{-i\\pi/2}$.</p>`);
+
+add(CH2,M2,"Exercice 2.3 — c)","Donner la forme algébrique et la forme exponentielle de $-3e^{i\\pi/4}$.",
+`<p><b>On veut une forme exponentielle standard $re^{i\\theta}$ avec $r>0$.</b> Ici le nombre devant l'exponentielle est négatif ($-3$). On utilise le fait que $-1=e^{i\\pi}$ :
+$$-3e^{i\\pi/4} = 3\\times e^{i\\pi}\\times e^{i\\pi/4} = 3e^{i(\\pi+\\pi/4)} = 3e^{i5\\pi/4}.$$
+Comme $5\\pi/4-2\\pi=-3\\pi/4$, on peut aussi écrire $3e^{-i3\\pi/4}$ (même nombre, argument principal).</p>
+<p><b>Forme algébrique :</b> $3\\left(\\cos\\frac{5\\pi}{4}+i\\sin\\frac{5\\pi}{4}\\right)=3\\left(-\\frac{\\sqrt2}{2}-i\\frac{\\sqrt2}{2}\\right)=-\\frac{3\\sqrt2}{2}-i\\frac{3\\sqrt2}{2}$.</p>`);
+
+add(CH2,M2,"Exercice 2.3 — d)","Donner la forme algébrique et la forme exponentielle de $\\sqrt2+i\\sqrt6$.",
+`<p><b>Module :</b> $r=\\sqrt{(\\sqrt2)^2+(\\sqrt6)^2}=\\sqrt{2+6}=\\sqrt8=2\\sqrt2$.</p>
+<p><b>Argument :</b> $\\cos\\theta=\\dfrac{\\sqrt2}{2\\sqrt2}=\\dfrac12$ et $\\sin\\theta=\\dfrac{\\sqrt6}{2\\sqrt2}=\\dfrac{\\sqrt3}{2}$ (car $\\sqrt6/\\sqrt2=\\sqrt3$). Ces valeurs correspondent à $\\theta=\\dfrac{\\pi}{3}$.</p>
+<p><b>Forme exponentielle :</b> $\\sqrt2+i\\sqrt6 = 2\\sqrt2\\,e^{i\\pi/3}$.<br><b>Forme algébrique :</b> c'est l'écriture de départ, $\\sqrt2+i\\sqrt6$.</p>`);
+
+add(CH2,M2,"Exercice 2.3 — e)","Donner la forme algébrique et la forme exponentielle de $\\left(\\dfrac{\\sqrt3-i}{1+i}\\right)^4$.",
+`<p><b>Étape 1 — forme exponentielle du numérateur et du dénominateur.</b> $\\sqrt3-i$ : module $\\sqrt{3+1}=2$, argument $-\\pi/6$ (car $\\cos=\\frac{\\sqrt3}2,\\sin=-\\frac12$) donc $\\sqrt3-i=2e^{-i\\pi/6}$.<br>
+$1+i$ : module $\\sqrt2$, argument $\\pi/4$, donc $1+i=\\sqrt2\\,e^{i\\pi/4}$.</p>
+<p><b>Étape 2 — le quotient.</b> On divise les modules et on soustrait les arguments :
+$$\\frac{\\sqrt3-i}{1+i} = \\frac{2}{\\sqrt2}\\,e^{i(-\\pi/6-\\pi/4)} = \\sqrt2\\,e^{-i5\\pi/12}.$$</p>
+<p><b>Étape 3 — puissance 4.</b> On élève le module à la puissance 4 et on multiplie l'argument par 4 :
+$$(\\sqrt2)^4\\,e^{i4\\times(-5\\pi/12)} = 4\\,e^{-i5\\pi/3}.$$
+Comme $-5\\pi/3+2\\pi=\\pi/3$, l'argument principal est $\\pi/3$ : forme exponentielle $4e^{i\\pi/3}$.</p>
+<p><b>Forme algébrique :</b> $4\\left(\\cos\\frac\\pi3+i\\sin\\frac\\pi3\\right)=4\\left(\\frac12+i\\frac{\\sqrt3}2\\right)=2+2i\\sqrt3$.</p>`);
+
+add(CH2,M2,"Exercice 2.3 — f)","Donner la forme algébrique et la forme exponentielle de $\\left(-\\dfrac12+i\\dfrac{\\sqrt3}2\\right)^{2019}$.",
+`<p><b>Étape 1.</b> On reconnaît que $-\\frac12+i\\frac{\\sqrt3}2$ est déjà de module $1$ (car $(\\frac12)^2+(\\frac{\\sqrt3}2)^2=\\frac14+\\frac34=1$) et d'argument $\\dfrac{2\\pi}{3}$ (valeurs remarquables de cosinus/sinus). Donc $-\\frac12+i\\frac{\\sqrt3}2=e^{i2\\pi/3}$.</p>
+<p><b>Étape 2 — puissance 2019.</b> $\\left(e^{i2\\pi/3}\\right)^{2019}=e^{i\\,2019\\times\\frac{2\\pi}{3}}$. On calcule $2019\\times\\frac23 = \\frac{2019\\times2}{3}=673\\times2=1346$ (car $2019=3\\times673$ exactement). Donc l'angle est $1346\\pi$.</p>
+<p><b>Étape 3 — on réduit modulo $2\\pi$.</b> $1346\\pi = 673\\times(2\\pi)$ : c'est un multiple exact de $2\\pi$ ! Donc $e^{i1346\\pi}=e^{i0}=1$.</p>
+<p><b>Conclusion :</b> forme exponentielle $1\\times e^{i0}$, forme algébrique $1$.</p>`);
+
+add(CH2,M2,"Exercice 2.4 — racines de $i$","Déterminer les racines carrées de $i$.",
+`<p><b>Méthode algébrique.</b> On cherche $z=x+iy$ tel que $z^2=i$. En développant, $z^2=x^2-y^2+2ixy$. Par identification avec $i=0+1i$ :
+$$x^2-y^2=0 \\quad\\text{et}\\quad 2xy=1.$$
+La première équation donne $x^2=y^2$, donc $x=y$ ou $x=-y$. Comme $2xy=1>0$, $x$ et $y$ doivent être de même signe, ce qui élimine $x=-y$ (sauf si les deux sont nuls, impossible ici). Donc $x=y$.</p>
+<p>En remplaçant dans $2xy=1$ : $2x^2=1$, donc $x^2=\\frac12$, soit $x=\\pm\\frac{\\sqrt2}2$, et $y=x$ (même valeur).</p>
+<p><b>Résultat :</b> les deux racines carrées de $i$ sont $\\dfrac{\\sqrt2}2(1+i)$ et $-\\dfrac{\\sqrt2}2(1+i)$.</p>`);
+
+add(CH2,M2,"Exercice 2.4 — racines de $-9$","Déterminer les racines carrées de $-9$.",
+`<p>On cherche $z$ tel que $z^2=-9$. On remarque que $(3i)^2=9i^2=-9$. Donc $3i$ est une racine, et l'autre est son opposée.</p>
+<p><b>Résultat :</b> les racines carrées de $-9$ sont $3i$ et $-3i$.</p>`);
+
+add(CH2,M2,"Exercice 2.4 — racines de $1+2i$","Déterminer les racines carrées de $1+2i$.",
+`<p><b>Étape 1 — module.</b> $|1+2i|=\\sqrt{1^2+2^2}=\\sqrt5$. Si $z=x+iy$ vérifie $z^2=1+2i$, alors $|z|^2=|z^2|=\\sqrt5$, donc $x^2+y^2=\\sqrt5$.</p>
+<p><b>Étape 2 — système.</b> On identifie aussi partie réelle et imaginaire de $z^2=x^2-y^2+2ixy$ avec $1+2i$ : $x^2-y^2=1$ et $2xy=2$, soit $xy=1$.</p>
+<p><b>Étape 3 — on résout.</b> En additionnant $x^2+y^2=\\sqrt5$ et $x^2-y^2=1$ : $2x^2=\\sqrt5+1$, donc $x^2=\\dfrac{\\sqrt5+1}{2}$. En soustrayant : $2y^2=\\sqrt5-1$, donc $y^2=\\dfrac{\\sqrt5-1}{2}$. Comme $xy=1>0$, $x$ et $y$ sont de même signe.</p>
+<p><b>Résultat :</b> les racines carrées de $1+2i$ sont
+$$\\pm\\left(\\sqrt{\\frac{\\sqrt5+1}{2}}+i\\sqrt{\\frac{\\sqrt5-1}{2}}\\right).$$
+(Ces expressions ne se simplifient pas en nombres « ronds », c'est normal, elles restent exactes.)</p>`);
+
+add(CH2,M2,"Exercice 2.5 — a)","Déterminer la forme algébrique de $\\dfrac{2+i}{1-2i}$.",
+`<p><b>Méthode :</b> pour rendre le dénominateur réel, on multiplie numérateur et dénominateur par le conjugué du dénominateur, $1+2i$.
+$$\\frac{2+i}{1-2i} = \\frac{(2+i)(1+2i)}{(1-2i)(1+2i)}.$$
+Le dénominateur devient $1^2+2^2=5$ (produit d'un nombre par son conjugué : $(a-bi)(a+bi)=a^2+b^2$).<br>
+Le numérateur : $(2+i)(1+2i) = 2+4i+i+2i^2 = 2+5i-2 = 5i$.</p>
+<p><b>Résultat :</b> $\\dfrac{2+i}{1-2i} = \\dfrac{5i}{5} = i$.</p>`);
+
+add(CH2,M2,"Exercice 2.5 — b)","Déterminer la forme algébrique de $\\dfrac{1+i}{1+2i}+\\dfrac{1-i}{1-2i}$.",
+`<p>On traite chaque fraction séparément en multipliant par le conjugué du dénominateur.</p>
+<p><b>Premier terme :</b> $\\dfrac{1+i}{1+2i}=\\dfrac{(1+i)(1-2i)}{1+4}=\\dfrac{1-2i+i-2i^2}{5}=\\dfrac{1-i+2}{5}=\\dfrac{3-i}{5}$.</p>
+<p><b>Deuxième terme :</b> $\\dfrac{1-i}{1-2i}=\\dfrac{(1-i)(1+2i)}{1+4}=\\dfrac{1+2i-i-2i^2}{5}=\\dfrac{1+i+2}{5}=\\dfrac{3+i}{5}$.</p>
+<p><b>Somme :</b> $\\dfrac{3-i}{5}+\\dfrac{3+i}{5}=\\dfrac{6}{5}$.</p>`);
+
+add(CH2,M2,"Exercice 2.5 — c)","Déterminer la forme algébrique de $e^{-i\\pi/2}$.",
+`<p>On applique directement la définition $e^{i\\theta}=\\cos\\theta+i\\sin\\theta$ avec $\\theta=-\\dfrac\\pi2$ :
+$$e^{-i\\pi/2} = \\cos\\left(-\\frac\\pi2\\right)+i\\sin\\left(-\\frac\\pi2\\right) = 0 + i(-1) = -i.$$</p>`);
+
+add(CH2,M2,"Exercice 2.6 — a)","Déterminer la forme exponentielle de $\\sqrt3+i$.",
+`<p><b>Module :</b> $r=\\sqrt{3+1}=2$. <b>Argument :</b> $\\cos\\theta=\\frac{\\sqrt3}2,\\sin\\theta=\\frac12$, donc $\\theta=\\frac\\pi6$.</p>
+<p><b>Résultat :</b> $\\sqrt3+i = 2e^{i\\pi/6}$.</p>`);
+
+add(CH2,M2,"Exercice 2.6 — b)","Déterminer la forme exponentielle de $\\sqrt6-i\\sqrt2$.",
+`<p><b>Module :</b> $r=\\sqrt{6+2}=\\sqrt8=2\\sqrt2$. <b>Argument :</b> $\\cos\\theta=\\frac{\\sqrt6}{2\\sqrt2}=\\frac{\\sqrt3}2$ et $\\sin\\theta=\\frac{-\\sqrt2}{2\\sqrt2}=-\\frac12$, donc $\\theta=-\\frac\\pi6$.</p>
+<p><b>Résultat :</b> $\\sqrt6-i\\sqrt2 = 2\\sqrt2\\,e^{-i\\pi/6}$.</p>`);
+
+add(CH2,M2,"Exercice 2.6 — c)","Déterminer la forme exponentielle de $-3-3i$.",
+`<p><b>Module :</b> $r=\\sqrt{9+9}=3\\sqrt2$. <b>Argument :</b> partie réelle et imaginaire toutes deux négatives et égales : le point est dans le 3e quadrant, à $\\frac\\pi4$ de l'axe, donc l'argument principal est $-\\pi+\\frac\\pi4=-\\frac{3\\pi}4$.</p>
+<p><b>Résultat :</b> $-3-3i = 3\\sqrt2\\,e^{-i3\\pi/4}$.</p>`);
+
+add(CH2,M2,"Exercice 2.6 — d)","Déterminer la forme exponentielle de $-3$.",
+`<p>$-3$ est un réel négatif : son module est $|-3|=3$ et son argument est $\\pi$ (il est sur l'axe réel négatif).</p>
+<p><b>Résultat :</b> $-3 = 3e^{i\\pi}$.</p>`);
+
+add(CH2,M2,"Exercice 2.6 — e)","Déterminer la forme exponentielle de $\\dfrac{-1-i}{\\sqrt3-i}$.",
+`<p><b>Numérateur :</b> $-1-i$, module $\\sqrt2$, argument $-\\frac{3\\pi}4$ (3e quadrant, angle de référence $\\pi/4$).<br>
+<b>Dénominateur :</b> $\\sqrt3-i$, module $2$, argument $-\\frac\\pi6$ (calculé à l'exercice 2.3).</p>
+<p><b>Quotient :</b> on divise les modules, on soustrait les arguments :
+$$\\frac{\\sqrt2}{2}\\,e^{i\\left(-\\frac{3\\pi}4-\\left(-\\frac\\pi6\\right)\\right)} = \\frac{\\sqrt2}{2}\\,e^{i\\left(-\\frac{9\\pi}{12}+\\frac{2\\pi}{12}\\right)} = \\frac{\\sqrt2}{2}\\,e^{-i7\\pi/12}.$$</p>`);
+
+add(CH2,M2,"Exercice 2.6 — f)","Pour $n\\in\\mathbb{Z}$, déterminer la forme exponentielle de $(1-i)^n$.",
+`<p><b>Étape 1.</b> $1-i$ a pour module $\\sqrt2$ et pour argument $-\\frac\\pi4$ (4e quadrant), donc $1-i=\\sqrt2\\,e^{-i\\pi/4}$.</p>
+<p><b>Étape 2 — puissance $n$.</b> On élève le module à la puissance $n$ et on multiplie l'argument par $n$ (cette règle reste valable même pour $n$ négatif) :
+$$(1-i)^n = (\\sqrt2)^n\\,e^{-in\\pi/4} = 2^{n/2}\\,e^{-in\\pi/4}.$$</p>`);
+
+add(CH2,M2,"Exercice 2.7","On note $z=1+i$ et $z'=\\sqrt3+i$. À l'aide de $\\dfrac{z}{z'}$ déterminer $\\cos(\\pi/12)$ et $\\sin(\\pi/12)$.",
+`<p><b>Étape 1 — deux calculs de $z/z'$.</b> D'un côté, sous forme exponentielle : $z=\\sqrt2\\,e^{i\\pi/4}$ et $z'=2e^{i\\pi/6}$ (voir 2.6a), donc
+$$\\frac{z}{z'} = \\frac{\\sqrt2}{2}\\,e^{i(\\pi/4-\\pi/6)} = \\frac{\\sqrt2}{2}\\,e^{i\\pi/12}$$
+(car $\\pi/4-\\pi/6=\\frac{3\\pi-2\\pi}{12}=\\frac{\\pi}{12}$).</p>
+<p><b>Étape 2 — calcul algébrique direct.</b> $\\dfrac{1+i}{\\sqrt3+i}=\\dfrac{(1+i)(\\sqrt3-i)}{(\\sqrt3)^2+1^2}=\\dfrac{\\sqrt3-i+i\\sqrt3-i^2}{4}=\\dfrac{(\\sqrt3+1)+i(\\sqrt3-1)}{4}$.</p>
+<p><b>Étape 3 — on identifie les deux écritures.</b> On a $\\frac{\\sqrt2}{2}e^{i\\pi/12}=\\frac{\\sqrt2}{2}\\cos(\\pi/12)+i\\frac{\\sqrt2}{2}\\sin(\\pi/12)$. En comparant partie réelle et partie imaginaire avec l'étape 2 :
+$$\\frac{\\sqrt2}{2}\\cos\\left(\\frac\\pi{12}\\right)=\\frac{\\sqrt3+1}4 \\quad\\Longrightarrow\\quad \\cos\\left(\\frac\\pi{12}\\right)=\\frac{\\sqrt3+1}{2\\sqrt2}=\\frac{\\sqrt6+\\sqrt2}{4},$$
+$$\\frac{\\sqrt2}{2}\\sin\\left(\\frac\\pi{12}\\right)=\\frac{\\sqrt3-1}4 \\quad\\Longrightarrow\\quad \\sin\\left(\\frac\\pi{12}\\right)=\\frac{\\sqrt3-1}{2\\sqrt2}=\\frac{\\sqrt6-\\sqrt2}{4}.$$</p>`);
+
+add(CH2,M2,"Exercice 2.8","Résoudre dans $\\mathbb{C}$ l'équation $\\dfrac1{z^2}+z^2+1=0$.",
+`<p><b>Étape 1 — on élimine le dénominateur.</b> On a nécessairement $z\\neq0$. On multiplie toute l'équation par $z^2$ :
+$$1+z^4+z^2=0, \\quad\\text{soit}\\quad z^4+z^2+1=0.$$</p>
+<p><b>Étape 2 — on factorise.</b> On peut vérifier que $z^4+z^2+1=(z^2+z+1)(z^2-z+1)$ (en développant le produit, les termes en $z^3$ et $z$ s'annulent, il reste bien $z^4+z^2+1$).</p>
+<p><b>Étape 3 — on résout chaque facteur.</b><br>
+$z^2+z+1=0$ : discriminant $\\Delta=1-4=-3$, racines $z=\\dfrac{-1\\pm i\\sqrt3}2=e^{\\pm i2\\pi/3}$.<br>
+$z^2-z+1=0$ : discriminant $\\Delta=1-4=-3$, racines $z=\\dfrac{1\\pm i\\sqrt3}2=e^{\\pm i\\pi/3}$.</p>
+<p><b>Conclusion :</b> les quatre solutions (toutes non nulles, donc valides) sont $e^{i\\pi/3},\\,e^{-i\\pi/3},\\,e^{i2\\pi/3},\\,e^{-i2\\pi/3}$.</p>`);
+
+add(CH2,M2,"Exercice 2.9","Soit $n$ un entier naturel non nul. Résoudre, dans $\\mathbb{C}$, l'équation $(z-1)^n=(z+1)^n$.",
+`<p><b>Étape 1 — $z=-1$ n'est pas solution.</b> Si $z=-1$ : membre de gauche $(-2)^n\\neq0$, membre de droite $0^n=0$ : ce n'est pas égal. Donc toute solution vérifie $z\\neq-1$, et on peut diviser par $(z+1)^n$ :
+$$\\left(\\frac{z-1}{z+1}\\right)^n=1.$$</p>
+<p><b>Étape 2 — on pose $w=\\dfrac{z-1}{z+1}$.</b> L'équation devient $w^n=1$ : $w$ est une racine $n$-ième de l'unité, donc $w=e^{i2k\\pi/n}$ pour $k=0,1,\\dots,n-1$. Le cas $k=0$ donne $w=1$, ce qui correspondrait à $z-1=z+1$, impossible : ce cas ne donne donc pas de solution et est à écarter.</p>
+<p><b>Étape 3 — on retrouve $z$ pour $k=1,\\dots,n-1$.</b> De $z-1=w(z+1)$ on tire $z(1-w)=1+w$, donc $z=\\dfrac{1+w}{1-w}$ (avec $w=e^{i2k\\pi/n}\\neq1$).</p>
+<p><b>Simplification (facultative) :</b> en utilisant $1+e^{i\\theta}=2\\cos(\\theta/2)e^{i\\theta/2}$ et $1-e^{i\\theta}=-2i\\sin(\\theta/2)e^{i\\theta/2}$, on obtient une forme plus simple :
+$$z_k = i\\cot\\!\\left(\\frac{k\\pi}{n}\\right), \\quad k=1,\\dots,n-1.$$
+Ce sont $n-1$ solutions, toutes des nombres purement imaginaires.</p>`);
+
+add(CH2,M2,"Exercice 2.10","Déterminer les racines cubiques de $-i$.",
+`<p><b>Étape 1 — forme exponentielle de $-i$.</b> $-i$ a pour module $1$ et pour argument $-\\dfrac\\pi2$ : $-i=e^{-i\\pi/2}$.</p>
+<p><b>Étape 2 — formule des racines $n$-ièmes.</b> Les racines cubiques d'un nombre $re^{i\\theta}$ sont $\\sqrt[3]{r}\\,e^{i(\\theta+2k\\pi)/3}$ pour $k=0,1,2$. Ici $r=1$, $\\theta=-\\frac\\pi2$ :
+$$z_k = e^{i\\left(-\\frac\\pi2+2k\\pi\\right)/3}, \\quad k=0,1,2.$$</p>
+<p><b>Calcul des trois arguments :</b> $k=0$ : $-\\frac\\pi6$. $k=1$ : $-\\frac\\pi6+\\frac{2\\pi}3=\\frac\\pi2$. $k=2$ : $-\\frac\\pi6+\\frac{4\\pi}3=\\frac{7\\pi}6$ (ou $-\\frac{5\\pi}6$).</p>
+<p><b>Résultat (formes algébriques) :</b> les trois racines cubiques de $-i$ sont
+$$e^{-i\\pi/6}=\\frac{\\sqrt3}2-\\frac{i}2,\\qquad e^{i\\pi/2}=i,\\qquad e^{-i5\\pi/6}=-\\frac{\\sqrt3}2-\\frac{i}2.$$</p>`);
+
+add(CH2,M2,"Exercice 2.11","Déterminer les racines carrées du nombre complexe $-7+5i$.",
+`<p><b>Étape 1 — module.</b> $|-7+5i|=\\sqrt{49+25}=\\sqrt{74}$. Si $z=x+iy$ vérifie $z^2=-7+5i$, alors $x^2+y^2=|z^2|=\\sqrt{74}$.</p>
+<p><b>Étape 2 — identification.</b> $z^2=x^2-y^2+2ixy=-7+5i$ donne $x^2-y^2=-7$ et $2xy=5$ (donc $xy>0$ : $x,y$ de même signe).</p>
+<p><b>Étape 3 — on résout.</b> En additionnant $x^2+y^2=\\sqrt{74}$ et $x^2-y^2=-7$ : $2x^2=\\sqrt{74}-7$, donc $x^2=\\dfrac{\\sqrt{74}-7}2$. En soustrayant : $2y^2=\\sqrt{74}+7$, donc $y^2=\\dfrac{\\sqrt{74}+7}2$.</p>
+<p><b>Résultat :</b> les racines carrées de $-7+5i$ sont
+$$\\pm\\left(\\sqrt{\\frac{\\sqrt{74}-7}{2}}+i\\sqrt{\\frac{\\sqrt{74}+7}{2}}\\right)$$
+(valeur numérique approchée : $\\pm(0{,}90+2{,}79i)$).</p>`);
+
+add(CH2,M2,"Exercice 2.12","Pour tout $\\theta\\in\\mathbb{R}$ déterminer $\\sum_{p=0}^{n}\\binom{n}{p}\\sin(p\\theta)$.",
+`<p><b>Idée :</b> on introduit la somme « jumelle » avec des cosinus, et on regroupe les deux dans une exponentielle complexe. On considère
+$$\\sum_{p=0}^{n}\\binom{n}{p}e^{ip\\theta} = \\sum_{p=0}^{n}\\binom{n}{p}(e^{i\\theta})^p\\,1^{n-p} = (1+e^{i\\theta})^n$$
+par la formule du binôme. La partie imaginaire de cette somme est exactement $\\sum_{p=0}^n\\binom np\\sin(p\\theta)$ (puisque $\\Im(e^{ip\\theta})=\\sin(p\\theta)$).</p>
+<p><b>Étape — on met $1+e^{i\\theta}$ sous forme exponentielle.</b> En factorisant par l'angle moitié :
+$$1+e^{i\\theta} = e^{i\\theta/2}\\left(e^{-i\\theta/2}+e^{i\\theta/2}\\right) = 2\\cos\\left(\\frac\\theta2\\right)e^{i\\theta/2}.$$</p>
+<p><b>On élève à la puissance $n$ :</b>
+$$(1+e^{i\\theta})^n = 2^n\\cos^n\\!\\left(\\frac\\theta2\\right)e^{in\\theta/2} = 2^n\\cos^n\\!\\left(\\frac\\theta2\\right)\\left[\\cos\\!\\left(\\frac{n\\theta}2\\right)+i\\sin\\!\\left(\\frac{n\\theta}2\\right)\\right].$$</p>
+<p><b>Conclusion (partie imaginaire) :</b>
+$$\\sum_{p=0}^{n}\\binom{n}{p}\\sin(p\\theta) = 2^n\\cos^n\\!\\left(\\frac\\theta2\\right)\\sin\\!\\left(\\frac{n\\theta}2\\right).$$</p>`);
+
+add(CH2,M2,"Exercice 2.13","Déterminer $\\displaystyle\\int_0^{\\pi/2}\\cos(2x)\\sin(3x)\\,dx$.",
+`<p><b>Étape 1 — on transforme le produit en somme.</b> On utilise la formule $\\sin(A)\\cos(B)=\\dfrac12\\big[\\sin(A+B)+\\sin(A-B)\\big]$ avec $A=3x$, $B=2x$ :
+$$\\cos(2x)\\sin(3x) = \\frac12\\big[\\sin(5x)+\\sin(x)\\big].$$</p>
+<p><b>Étape 2 — on intègre terme à terme.</b>
+$$\\int_0^{\\pi/2}\\cos(2x)\\sin(3x)\\,dx = \\frac12\\left[-\\frac{\\cos(5x)}5-\\cos(x)\\right]_0^{\\pi/2}.$$</p>
+<p><b>Étape 3 — on évalue aux bornes.</b> En $x=\\pi/2$ : $\\cos(5\\pi/2)=\\cos(\\pi/2)=0$ (car $5\\pi/2=2\\pi+\\pi/2$) et $\\cos(\\pi/2)=0$, donc le crochet vaut $0$.<br>
+En $x=0$ : $\\cos(0)=1$ pour les deux, donc le crochet vaut $-\\frac15-1=-\\frac65$.</p>
+<p><b>Résultat :</b> $\\dfrac12\\left(0-\\left(-\\dfrac65\\right)\\right)=\\dfrac12\\times\\dfrac65=\\dfrac35$.</p>`);
+
+add(CH2,M2,"Exercice 2.14","1. Calculer $T_n(x)=\\sum_{k=0}^{n}e^{2ikx}$, en déduire que $\\Re(T_n(x))=\\cos(nx)\\dfrac{\\sin((n+1)x)}{\\sin(x)}$.",
+`<p><b>Étape 1 — somme géométrique.</b> $T_n(x)=\\sum_{k=0}^n(e^{2ix})^k$ est une somme géométrique de raison $e^{2ix}\\neq1$ (car $x\\notin\\{k\\pi\\}$). D'après la formule (exercice 1.10.3) :
+$$T_n(x) = \\frac{1-e^{2i(n+1)x}}{1-e^{2ix}}.$$</p>
+<p><b>Étape 2 — on factorise par l'angle moitié</b> (avec la formule $1-e^{i\\alpha}=-2i\\sin(\\alpha/2)e^{i\\alpha/2}$) :
+$$T_n(x) = \\frac{-2i\\sin((n+1)x)\\,e^{i(n+1)x}}{-2i\\sin(x)\\,e^{ix}} = \\frac{\\sin((n+1)x)}{\\sin(x)}\\,e^{i(n+1)x-ix} = e^{inx}\\,\\frac{\\sin((n+1)x)}{\\sin(x)}.$$</p>
+<p><b>Étape 3 — partie réelle.</b> Comme $\\dfrac{\\sin((n+1)x)}{\\sin(x)}$ est un nombre réel, la partie réelle de $T_n(x)=e^{inx}\\times(\\text{réel})$ s'obtient en prenant la partie réelle de $e^{inx}=\\cos(nx)$ :
+$$\\Re(T_n(x)) = \\cos(nx)\\,\\frac{\\sin((n+1)x)}{\\sin(x)}.$$</p>`);
+
+add(CH2,M2,"Exercice 2.14","2. Montrer que $S_n(x)=\\dfrac{\\sin((2n+1)x)}{\\sin(x)}=1+2\\sum_{k=1}^{n}\\cos(2kx)$.",
+`<p><b>Première égalité (via $2\\Re(T_n(x))-1$).</b> On part de $S_n(x)=2\\cos(nx)\\dfrac{\\sin((n+1)x)}{\\sin(x)}-1$ (d'après la question 1). On utilise la formule produit-somme $2\\cos(A)\\sin(B)=\\sin(A+B)+\\sin(B-A)$ avec $A=nx,B=(n+1)x$ :
+$$2\\cos(nx)\\sin((n+1)x) = \\sin((2n+1)x)+\\sin(x).$$
+Donc $S_n(x)=\\dfrac{\\sin((2n+1)x)+\\sin(x)}{\\sin(x)}-1 = \\dfrac{\\sin((2n+1)x)}{\\sin(x)}+1-1 = \\dfrac{\\sin((2n+1)x)}{\\sin(x)}$.</p>
+<p><b>Deuxième égalité (directe).</b> Par définition $S_n(x)=2\\Re(T_n(x))-1$ où $T_n(x)=\\sum_{k=0}^n e^{2ikx}$. Sa partie réelle est $\\sum_{k=0}^n\\cos(2kx)$ (le cosinus est la partie réelle de chaque terme). On isole le terme $k=0$ (qui vaut $\\cos(0)=1$) :
+$$S_n(x)=2\\left(1+\\sum_{k=1}^n\\cos(2kx)\\right)-1 = 1+2\\sum_{k=1}^n\\cos(2kx).$$</p>`);
+
+add(CH2,M2,"Exercice 2.15 — a)","Déterminer l'ensemble des points $M$ d'affixe $z$ telle que $|z-2i|=2$.",
+`<p><b>Rappel :</b> $|z-z_0|=r$ décrit le cercle de centre le point d'affixe $z_0$ et de rayon $r$.</p>
+<p>Ici $z_0=2i$ (le point de coordonnées $(0,2)$) et $r=2$.</p>
+<p><b>Résultat :</b> l'ensemble cherché est le <b>cercle de centre $(0,2)$ et de rayon $2$</b>.</p>`);
+
+add(CH2,M2,"Exercice 2.15 — b)","Déterminer l'ensemble des points $M$ d'affixe $z$ telle que $|z-1+i|&lt;2$.",
+`<p>On réécrit $|z-1+i|=|z-(1-i)|$. La condition $|z-z_0|\\lt r$ (inégalité stricte) décrit l'intérieur du disque de centre le point d'affixe $z_0$ et de rayon $r$ (sans le bord).</p>
+<p>Ici $z_0=1-i$ (point $(1,-1)$) et $r=2$.</p>
+<p><b>Résultat :</b> l'ensemble cherché est le <b>disque ouvert de centre $(1,-1)$ et de rayon $2$</b> (les points strictement à l'intérieur du cercle).</p>`);
+
+add(CH2,M2,"Exercice 2.15 — c)","Déterminer l'ensemble des points $M$ d'affixe $z$ telle que $|z+2-i|=|z-1-i|$.",
+`<p><b>Rappel :</b> $|z-z_A|=|z-z_B|$ signifie que $M$ est équidistant des points $A$ (d'affixe $z_A$) et $B$ (d'affixe $z_B$) : c'est la <b>médiatrice</b> du segment $[AB]$.</p>
+<p>Ici on réécrit $|z-(-2+i)|=|z-(1+i)|$ : $A$ a pour affixe $-2+i$, soit les coordonnées $(-2,1)$, et $B$ a pour affixe $1+i$, soit $(1,1)$.</p>
+<p>Comme $A$ et $B$ ont la même ordonnée ($y=1$), la médiatrice de $[AB]$ est la droite verticale passant par le milieu de $[AB]$, d'abscisse $\\frac{-2+1}2=-\\frac12$.</p>
+<p><b>Résultat :</b> l'ensemble cherché est la <b>droite verticale d'équation $x=-\\dfrac12$</b>.</p>`);
+
+add(CH2,M2,"Exercice 2.15 — d)","Déterminer l'ensemble des points $M$ d'affixe $z$ telle que $\\arg(z)=\\dfrac\\pi2\\,[\\pi]$.",
+`<p><b>Rappel :</b> la notation « $[\\pi]$ » signifie « modulo $\\pi$ », c'est-à-dire que l'argument peut valoir $\\frac\\pi2$ ou $\\frac\\pi2+\\pi=\\frac{3\\pi}2$ (ce qui revient à $-\\frac\\pi2$).</p>
+<p>Un argument égal à $\\frac\\pi2$ correspond au demi-axe imaginaire positif ($z$ imaginaire pur, partie imaginaire strictement positive) ; un argument égal à $-\\frac\\pi2$ correspond au demi-axe imaginaire négatif. À eux deux, ces deux demi-axes forment tout l'axe imaginaire, sauf l'origine (où l'argument n'est pas défini).</p>
+<p><b>Résultat :</b> l'ensemble cherché est <b>l'axe imaginaire privé de l'origine</b>, c'est-à-dire l'ensemble des points d'affixe $iy$ avec $y\\in\\mathbb{R}^*$.</p>`);
+
+add(CH2,M2,"Exercice 2.16","1. Soit $A$ le point d'affixe 1. On considère $p$ qui à $M$ d'affixe $z\\neq1$ associe $M'$ d'affixe $z'=\\dfrac{1-z}{\\bar z-1}$. Déterminer l'ensemble des antécédents de $A$ par $p$.",
+`<p>On cherche les $z\\neq1$ tels que $z'=1$ (affixe de $A$) :
+$$\\frac{1-z}{\\bar z-1}=1 \\;\\Longleftrightarrow\\; 1-z=\\bar z-1 \\;\\Longleftrightarrow\\; 2 = z+\\bar z.$$
+Or $z+\\bar z=2\\Re(z)$, donc la condition devient $\\Re(z)=1$.</p>
+<p><b>Résultat :</b> l'ensemble des antécédents de $A$ est la <b>droite verticale d'équation $x=1$</b> (privée du point $A$ lui-même, puisque $z\\neq1$ est exigé par le domaine de $p$).</p>`);
+
+add(CH2,M2,"Exercice 2.16","2. Calculer le module de $z'$.",
+`<p>$$|z'| = \\frac{|1-z|}{|\\bar z-1|}.$$
+On remarque que $|1-z|=|z-1|$ (le module d'un nombre et de son opposé sont égaux). De plus, comme $1$ est réel, $\\bar z-1 = \\overline{z}-\\overline{1}=\\overline{z-1}$, donc $|\\bar z-1|=|\\overline{z-1}|=|z-1|$ (le module d'un nombre et de son conjugué sont égaux).</p>
+<p><b>Résultat :</b> $|z'|=\\dfrac{|z-1|}{|z-1|}=1$. Le point $M'$ est donc toujours situé sur le <b>cercle de centre $O$ (origine) et de rayon $1$</b>, quel que soit $M$ (avec $z\\neq1$).</p>`);
+
+add(CH2,M2,"Exercice 2.16","3. Démontrer que les points $A$, $M$ et $M'$ sont alignés.",
+`<p><b>Rappel :</b> trois points $A,M,M'$ sont alignés si et seulement si le rapport $\\dfrac{z'-1}{z-1}$ (où $1$ est l'affixe de $A$) est un <b>nombre réel</b>.</p>
+<p><b>Étape 1.</b> $$z'-1 = \\frac{1-z}{\\bar z-1}-1 = \\frac{(1-z)-(\\bar z-1)}{\\bar z-1} = \\frac{2-z-\\bar z}{\\bar z-1} = \\frac{2-2\\Re(z)}{\\bar z-1} = \\frac{2(1-\\Re(z))}{\\bar z-1}.$$</p>
+<p><b>Étape 2.</b> $$\\frac{z'-1}{z-1} = \\frac{2(1-\\Re(z))}{(\\bar z-1)(z-1)}.$$
+Or $(\\bar z-1)(z-1)=(z-1)\\overline{(z-1)}=|z-1|^2$ (produit d'un nombre par son conjugué), un nombre <b>réel positif</b> (non nul car $z\\neq1$).</p>
+<p><b>Conclusion :</b> $$\\frac{z'-1}{z-1} = \\frac{2(1-\\Re(z))}{|z-1|^2},$$ qui est bien un nombre réel (quotient de deux réels). Le rapport étant réel, les points $A$, $M$, $M'$ sont alignés.</p>`);
+
+add(CH2,M2,"Exercice 2.16","4. En déduire une construction du point $M'$.",
+`<p>D'après la question 2, $M'$ appartient au cercle de centre $O$ et de rayon $1$. D'après la question 3, $M'$ appartient aussi à la droite $(AM)$.</p>
+<p><b>Construction :</b> on trace le cercle de centre $O$ et de rayon $1$, puis la droite $(AM)$ ; le point $M'$ est l'un des points d'intersection de cette droite avec ce cercle (celui indiqué par la formule, si la droite recoupe le cercle en deux points).</p>`);
+
+add(CH2,M2,"Exercice 2.17","1. On note $g$ l'affixe du centre de gravité $G$ de $ABC$. Déterminer l'affixe de $G$.",
+`<p><b>Rappel :</b> l'affixe du centre de gravité (isobarycentre) de trois points est la <b>moyenne</b> de leurs affixes.</p>
+<p><b>Résultat :</b> $g=\\dfrac{a+b+c}{3}$.</p>`);
+
+add(CH2,M2,"Exercice 2.17","2. Démontrer que $|a|=|b|=|c|$.",
+`<p>Par construction, $O$ est le centre du cercle circonscrit à $ABC$ : par définition, $O$ est équidistant des trois sommets, c'est-à-dire $OA=OB=OC$ (ce sont tous les trois égaux au rayon $R$ du cercle circonscrit).</p>
+<p>Comme $O$ est l'origine du repère (affixe $0$), on a $OA=|a-0|=|a|$, et de même $OB=|b|$, $OC=|c|$.</p>
+<p><b>Conclusion :</b> $|a|=|b|=|c|=R$.</p>`);
+
+add(CH2,M2,"Exercice 2.17","3. Montrer que $\\dfrac{h-a}{c-b}$ est imaginaire pur. Interpréter.",
+`<p><b>Étape 1.</b> Par définition $h=a+b+c$, donc $h-a=b+c$. Il faut donc étudier $w=\\dfrac{b+c}{c-b}$.</p>
+<p><b>Étape 2 — un nombre est imaginaire pur si et seulement s'il est égal à l'opposé de son conjugué ($\\bar w=-w$).</b> On utilise $|b|=|c|=R$ (question 2), ce qui donne $\\bar b=\\dfrac{R^2}{b}$ et $\\bar c=\\dfrac{R^2}{c}$ (car $b\\bar b=R^2 \\Rightarrow \\bar b=R^2/b$, et de même pour $c$).</p>
+<p><b>Étape 3.</b>
+$$\\bar w = \\frac{\\bar b+\\bar c}{\\bar c-\\bar b} = \\frac{\\frac{R^2}b+\\frac{R^2}c}{\\frac{R^2}c-\\frac{R^2}b} = \\frac{\\frac1b+\\frac1c}{\\frac1c-\\frac1b} = \\frac{\\frac{b+c}{bc}}{\\frac{b-c}{bc}} = \\frac{b+c}{b-c} = -\\frac{b+c}{c-b} = -w.$$
+On a bien $\\bar w=-w$ : $w$ est imaginaire pur.</p>
+<p><b>Interprétation :</b> $h-a$ est le vecteur (affixe de) $\\overrightarrow{AH}$, et $c-b$ est le vecteur $\\overrightarrow{BC}$. Un rapport de deux vecteurs (nombres complexes) est imaginaire pur si et seulement si ces deux vecteurs sont <b>perpendiculaires</b>. Donc $(AH)\\perp(BC)$.</p>`);
+
+add(CH2,M2,"Exercice 2.17","4. Montrer que $H$ est l'orthocentre du triangle $ABC$.",
+`<p>La question 3 a montré, en étudiant $(h-a)/(c-b)$, que $(AH)\\perp(BC)$ : la droite $(AH)$ est donc la <b>hauteur issue de $A$</b>.</p>
+<p>Comme $h=a+b+c$ est une expression <b>symétrique</b> en $a,b,c$ (elle ne change pas si l'on permute les rôles des sommets), le même raisonnement appliqué en échangeant les rôles montre que $(h-b)/(a-c)$ est aussi imaginaire pur, donc $(BH)\\perp(AC)$ : $(BH)$ est la hauteur issue de $B$. De même $(CH)\\perp(AB)$ : $(CH)$ est la hauteur issue de $C$.</p>
+<p><b>Conclusion :</b> $H$ appartient aux trois hauteurs du triangle $ABC$. Par définition, le point d'intersection des trois hauteurs est l'<b>orthocentre</b> : $H$ est donc l'orthocentre de $ABC$.</p>`);
+
+add(CH2,M2,"Exercice 2.17","5. Montrer que $O$, $G$ et $H$ sont alignés.",
+`<p>On a $O$ d'affixe $0$, $G$ d'affixe $g=\\dfrac{a+b+c}3$, et $H$ d'affixe $h=a+b+c$.</p>
+<p>On remarque que $h=3g$ : l'affixe de $H$ est un multiple <b>réel</b> (le réel $3$) de l'affixe de $G$. Cela signifie que le vecteur $\\overrightarrow{OH}$ est colinéaire au vecteur $\\overrightarrow{OG}$ (avec $\\overrightarrow{OH}=3\\overrightarrow{OG}$).</p>
+<p><b>Conclusion :</b> les points $O$, $G$, $H$ sont alignés (c'est la célèbre <b>droite d'Euler</b> du triangle).</p>`);
+
+add(CH2,M2,"Exercice 2.18","1. Montrer que, pour tout $k\\in\\{0,\\dots,n-1\\}$, $M_kM_{k+1}=2\\sin\\!\\left(\\dfrac\\pi n\\right)$.",
+`<p><b>Étape 1.</b> $M_kM_{k+1}=|z_{k+1}-z_k|$ où $z_k=e^{2ik\\pi/n}$. On factorise :
+$$z_{k+1}-z_k = e^{2i(k+1)\\pi/n}-e^{2ik\\pi/n} = e^{2ik\\pi/n}\\left(e^{2i\\pi/n}-1\\right).$$
+Le module de $e^{2ik\\pi/n}$ vaut $1$, donc $M_kM_{k+1}=\\left|e^{2i\\pi/n}-1\\right|$ : cette quantité <b>ne dépend pas de $k$</b>.</p>
+<p><b>Étape 2 — module de $e^{i\\alpha}-1$.</b> On factorise par l'angle moitié : $e^{i\\alpha}-1 = e^{i\\alpha/2}\\left(e^{i\\alpha/2}-e^{-i\\alpha/2}\\right)=e^{i\\alpha/2}\\times2i\\sin(\\alpha/2)$. En module : $|e^{i\\alpha}-1|=2|\\sin(\\alpha/2)|$.</p>
+<p><b>Étape 3.</b> Ici $\\alpha=\\dfrac{2\\pi}n$, donc $\\alpha/2=\\dfrac\\pi n$. Comme $n\\geq3$, on a $\\dfrac\\pi n\\in\\left(0,\\dfrac\\pi3\\right]$, donc $\\sin(\\pi/n)>0$ et $|\\sin(\\pi/n)|=\\sin(\\pi/n)$.</p>
+<p><b>Conclusion :</b> $M_kM_{k+1}=2\\sin\\!\\left(\\dfrac\\pi n\\right)$, pour tout $k$ (le résultat ne dépend pas de $k$, ce qui est cohérent : le polygone est régulier).</p>`);
+
+add(CH2,M2,"Exercice 2.18","2. En déduire le périmètre du polygone $M_0M_1\\cdots M_{n-1}$.",
+`<p>Le polygone a $n$ côtés : $M_0M_1, M_1M_2,\\dots,M_{n-2}M_{n-1}$, et $M_{n-1}M_0$ (qui referme le polygone). D'après la question 1, chacun de ces $n$ côtés a la même longueur $2\\sin(\\pi/n)$.</p>
+<p><b>Résultat :</b> le périmètre vaut $n\\times2\\sin\\!\\left(\\dfrac\\pi n\\right) = 2n\\sin\\!\\left(\\dfrac\\pi n\\right)$.</p>`);
+
+add(CH2,M2,"Exercice 2.18","3. Calculer la limite du périmètre lorsque $n$ tend vers $+\\infty$ (indication : $\\lim_{x\\to0}\\dfrac{\\sin x}{x}=1$).",
+`<p><b>Étape 1 — on fait apparaître le quotient de l'indication.</b> On réécrit le périmètre :
+$$2n\\sin\\!\\left(\\frac\\pi n\\right) = 2\\pi\\times\\frac{\\sin(\\pi/n)}{\\pi/n}.$$</p>
+<p><b>Étape 2.</b> Quand $n\\to+\\infty$, on pose $x=\\dfrac\\pi n \\to 0$. D'après l'indication, $\\dfrac{\\sin x}{x}\\to1$ quand $x\\to0$, donc $\\dfrac{\\sin(\\pi/n)}{\\pi/n}\\to1$.</p>
+<p><b>Conclusion :</b> le périmètre tend vers $2\\pi\\times1=2\\pi$. C'est cohérent : quand $n$ devient très grand, le polygone régulier inscrit se rapproche du cercle de rayon $1$, dont le périmètre (la circonférence) vaut précisément $2\\pi$.</p>`);
+
+// ---------- Moteur ----------
+let cur = 0;
+const jumpSel = document.getElementById('jump');
+DATA.forEach((item,i)=>{
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = (item.chap.startsWith("Chapitre 1")?"Ch.1 — ":"Ch.2 — ") + item.exo + " : " + stripHtml(item.q).slice(0,42);
+  jumpSel.appendChild(opt);
+});
+function stripHtml(s){ const d=document.createElement('div'); d.innerHTML=s; return d.textContent||""; }
+
+function render(){
+  const item = DATA[cur];
+  document.getElementById('examheader').textContent = item.chap + "  —  " + item.meta;
+  document.getElementById('exoid').textContent = item.exo;
+  document.getElementById('qtext').innerHTML = item.q;
+  const corr = document.getElementById('correction');
+  corr.innerHTML = item.c;
+  corr.hidden = true;
+  document.getElementById('corrBtn').textContent = "Voir la correction";
+  document.getElementById('corrBtn').style.display = 'inline-block';
+  document.getElementById('progress').textContent = "Question " + (cur+1) + " / " + DATA.length;
+  jumpSel.value = cur;
+  document.getElementById('prevBtn').disabled = (cur===0);
+  document.getElementById('nextBtn').disabled = (cur===DATA.length-1);
+  document.getElementById('nextBtn').textContent = (cur===DATA.length-1) ? "Fin ✓" : "Question suivante ▶";
+  window.scrollTo({top:0, behavior:'instant'});
+  if(window.MathJax && window.MathJax.typesetPromise){
+    MathJax.typesetPromise([document.getElementById('qtext'), document.getElementById('correction')]);
+  }
+}
+function toggleCorr(){
+  const corr = document.getElementById('correction');
+  corr.hidden = !corr.hidden;
+  document.getElementById('corrBtn').textContent = corr.hidden ? "Voir la correction" : "Masquer la correction";
+}
+function next(){ if(cur<DATA.length-1){ cur++; render(); } }
+function prev(){ if(cur>0){ cur--; render(); } }
+function goTo(i){ cur=parseInt(i,10); render(); }
+
+function toggleTheme(){
+  const html = document.documentElement;
+  const now = html.getAttribute('data-theme');
+  const next = now==='dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  try{ localStorage.setItem('ats-theme', next); }catch(e){}
+}
+(function initTheme(){
+  let saved=null;
+  try{ saved = localStorage.getItem('ats-theme'); }catch(e){}
+  if(saved){ document.documentElement.setAttribute('data-theme', saved); }
+})();
+
+render();
+</script>
+</body>
+</html>
